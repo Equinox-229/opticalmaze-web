@@ -1,0 +1,37 @@
+光学迷宫 - Web版本使用说明
+============================
+
+📱 在iPhone上使用：
+
+方法1：通过AirDrop接收后
+1. 在iPhone上接收文件夹
+2. 打开"文件"App
+3. 找到接收的文件夹
+4. 点击 opticalmaze.html 文件
+5. 会在Safari中打开
+
+⚠️ 注意：由于浏览器安全限制，AirDrop后可能无法直接运行。
+如果遇到问题，请使用方法2。
+
+方法2：通过局域网访问（推荐）
+1. 确保Mac和iPhone在同一Wi-Fi
+2. 在Mac上运行服务器：
+   cd "/Users/apple/Desktop/3rd term/iot/光学迷宫"
+   python3 -m http.server 8000
+3. 在iPhone Safari中访问：
+   http://Mac的IP地址:8000/opticalmaze.html
+
+方法3：上传到在线服务
+- GitHub Pages
+- Netlify
+- Vercel
+等在线服务，然后通过URL访问
+
+🎮 添加到主屏幕：
+1. 在Safari中打开游戏
+2. 点击分享按钮
+3. 选择"添加到主屏幕"
+4. 游戏会像App一样出现在主屏幕上
+
+祝你游戏愉快！
+
