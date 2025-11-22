@@ -543,13 +543,40 @@ const InternalConfig = function (initConfig) { // eslint-disable-line no-unused-
 				function done(result) {
 					onSuccess(result['instance'], result['module']);
 				}
-				if (typeof (WebAssembly.instantiateStreaming) !== 'undefined') {
-					WebAssembly.instantiateStreaming(Promise.resolve(r), imports).then(done);
-				} else {
-					r.arrayBuffer().then(function (buffer) {
-						WebAssembly.instantiate(buffer, imports).then(done);
-					});
-				}
+				// Try to load .wasm.gz file first
+				var wasmUrl = r.url || (loadPath + '.wasm');
+				var gzUrl = wasmUrl.replace('.wasm', '.wasm.gz');
+				
+				fetch(gzUrl).then(function(response) {
+					if (response.ok) {
+						return response.arrayBuffer().then(function(buffer) {
+							// Decompress gzip using native DecompressionStream (modern browsers)
+							if (typeof DecompressionStream !== 'undefined') {
+								var stream = new DecompressionStream('gzip');
+								var writer = stream.writable.getWriter();
+								writer.write(new Uint8Array(buffer));
+								writer.close();
+								return new Response(stream.readable).arrayBuffer();
+							} else {
+								// Fallback: try to use as-is (some browsers auto-decompress)
+								return buffer;
+							}
+						}).then(function(decompressed) {
+							return WebAssembly.instantiate(decompressed, imports);
+						});
+					} else {
+						throw new Error('GZ file not found');
+					}
+				}).then(done).catch(function() {
+					// Fallback to original .wasm file
+					if (typeof (WebAssembly.instantiateStreaming) !== 'undefined') {
+						WebAssembly.instantiateStreaming(Promise.resolve(r), imports).then(done);
+					} else {
+						r.arrayBuffer().then(function (buffer) {
+							WebAssembly.instantiate(buffer, imports).then(done);
+						});
+					}
+				});
 				r = null;
 				return {};
 			},
@@ -567,7 +594,8 @@ const InternalConfig = function (initConfig) { // eslint-disable-line no-unused-
 				} else if (path.endsWith('.side.wasm')) {
 					return `${loadPath}.side.wasm`;
 				} else if (path.endsWith('.wasm')) {
-					return `${loadPath}.wasm`;
+					// Try compressed version first
+					return `${loadPath}.wasm.gz`;
 				}
 				return path;
 			},
